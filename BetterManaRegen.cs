@@ -11,13 +11,22 @@ namespace BetterManaRegen
 
     class BetterManaRegen : Mod
     {
-        public static string ConfigPath = Path.Combine(Main.SavePath, "Mod Configs", "bettermanaregen.json");
+        //public static string ConfigPath = Path.Combine(Main.SavePath, "Mod Configs", "bettermanaregen.json");
 
         static BetterManaRegen()
         {
             var harmony = HarmonyInstance.Create("io.github.rypofalem.tmods.bettermanaregen");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+            
         }
+
+        public override void Unload()
+        {
+            var harmony = HarmonyInstance.Create("io.github.rypofalem.tmods.bettermanaregen");
+            harmony.UnpatchAll();
+        }
+
+        
     }
 
     [HarmonyPatch(typeof(Player))]

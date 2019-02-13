@@ -1,5 +1,5 @@
 author = rypofalem
-version = 0.1
+version = 0.2
 displayName = Better Mana Regeneration
 buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*
 dllReferences = 0Harmony
