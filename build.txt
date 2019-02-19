@@ -5,3 +5,4 @@ buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, *.ase
 homepage = https://github.com/RypoFalem/BetterManaRegen
 includeSource = true
 modReferences = TerrariaHooks
+languageVersion = 6
