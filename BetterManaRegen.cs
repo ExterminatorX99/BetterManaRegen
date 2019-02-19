@@ -1,94 +1,110 @@
 using Terraria.ModLoader;
 using Terraria;
-using Harmony;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.IO;
+using MonoMod.RuntimeDetour.HookGen;
+using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
+using System;
 
 namespace BetterManaRegen
 {
 
     class BetterManaRegen : Mod
     {
-        //public static string ConfigPath = Path.Combine(Main.SavePath, "Mod Configs", "bettermanaregen.json");
+		public override void Load()
+		{
+			IL.Terraria.Player.UpdateManaRegen += Player_UpdateManaRegen;
+		}
 
-        static BetterManaRegen()
-        {
-            var harmony = HarmonyInstance.Create("io.github.rypofalem.tmods.bettermanaregen");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-            
-        }
+		// We're looking for these instructions and we want to delete all but the first one
+		// IL_0114: stfld     int32 Terraria.Player::manaRegen
+		//
+		// IL_0119: ldarg.0
+		// IL_011A: ldflda    valuetype [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2 Terraria.Entity::velocity
+		// IL_011F: ldfld     float32 [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2::X
+		// IL_0124: ldc.r4    0.0
+		// IL_0129: bne.un.s  IL_013D
+		//
+		// IL_012B: ldarg.0
+		// IL_012C: ldflda    valuetype [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2 Terraria.Entity::velocity
+		// IL_0131: ldfld     float32 [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2::Y
+		// IL_0136: ldc.r4    0.0
+		// IL_013B: beq.s     IL_0150
+		//
+		// IL_013D: ldarg.0
+		// IL_013E: ldfld     int32[] Terraria.Player::grappling
+		// IL_0143: ldc.i4.0
+		// IL_0144: ldelem.i4
+		// IL_0145: ldc.i4.0
+		// IL_0146: bge.s     IL_0150
+		//
+		// IL_0148: ldarg.0
+		// IL_0149: ldfld     bool Terraria.Player::manaRegenBuff
+		// IL_014E: brfalse.s IL_0165
+		private void Player_UpdateManaRegen(MonoMod.RuntimeDetour.HookGen.HookIL il)
+		{
+			HookILCursor cursor = il.At(0);
+			Matches[] ilToRemove = {
+					instruction => instruction.MatchLdarg(0),
+					instruction => instruction.MatchLdflda<Entity>("velocity"),
+					instruction => instruction.MatchLdfld<Vector2>("X"),
+					instruction => instruction.MatchLdcR4(0.0f),
+					instruction => instruction.Match(OpCodes.Bne_Un_S),
 
-        public override void Unload()
-        {
-            var harmony = HarmonyInstance.Create("io.github.rypofalem.tmods.bettermanaregen");
-            harmony.UnpatchAll();
-        }
+					instruction => instruction.MatchLdarg(0),
+					instruction => instruction.MatchLdflda<Entity>("velocity"),
+					instruction => instruction.MatchLdfld<Vector2>("Y"),
+					instruction => instruction.MatchLdcR4(0.0f),
+					instruction => instruction.Match(OpCodes.Beq_S),
 
-        
-    }
+					instruction => instruction.MatchLdarg(0),
+					instruction => instruction.MatchLdfld<Player>("grappling"),
+					instruction => instruction.MatchLdcI4(0),
+					instruction => instruction.MatchLdelemI4(),
+					instruction => instruction.MatchLdcI4(0),
+					instruction => instruction.Match(OpCodes.Bge_S),
 
-    [HarmonyPatch(typeof(Player))]
-    [HarmonyPatch("UpdateManaRegen")]
-    public static class Player_UpdateManaRegen_Patcher
-    {
+					instruction => instruction.MatchLdarg(0),
+					instruction => instruction.MatchLdfld<Player>("manaRegenBuff"),
+					instruction => instruction.Match(OpCodes.Brfalse_S)
+			};
+			bool found = false; //whether or not we have matched our 1 + 19 instructions
 
-        // We're looking for these instructions and we want to delete all but the first one
-        // IL_0114: stfld     int32 Terraria.Player::manaRegen
-        //
-        // IL_0119: ldarg.0
-        // IL_011A: ldflda    valuetype [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2 Terraria.Entity::velocity
-        // IL_011F: ldfld     float32 [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2::X
-        // IL_0124: ldc.r4    0.0
-        // IL_0129: bne.un.s  IL_013D
-        //
-        // IL_012B: ldarg.0
-        // IL_012C: ldflda    valuetype [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2 Terraria.Entity::velocity
-        // IL_0131: ldfld     float32 [Microsoft.Xna.Framework]Microsoft.Xna.Framework.Vector2::Y
-        // IL_0136: ldc.r4    0.0
-        // IL_013B: beq.s     IL_0150
-        //
-        // IL_013D: ldarg.0
-        // IL_013E: ldfld     int32[] Terraria.Player::grappling
-        // IL_0143: ldc.i4.0
-        // IL_0144: ldelem.i4
-        // IL_0145: ldc.i4.0
-        // IL_0146: bge.s     IL_0150
-        //
-        // IL_0148: ldarg.0
-        // IL_0149: ldfld     bool Terraria.Player::manaRegenBuff
-        // IL_014E: brfalse.s IL_0165
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var code = new List<CodeInstruction>(instructions);
+			while (cursor.TryGotoNext(
+					// Look for when we store "manaRegen". This occurs just before our ilToRemove instructions
+					instruction => instruction.MatchStfld<Player>("manaRegen")))
+			{
+				HookILCursor backup = cursor.Clone();
+				found = true;
+				for (int i = 0; i < ilToRemove.Length; i++)
+				{
+					// Move cursor to next instruction and see if it doesn't match
+					cursor.GotoNext();
+					if (!ilToRemove[i](cursor.Next))
+					{
+						found = false;
+						break;
+					}
+				}
+				if (!found) continue;
 
-            // look for three instructions and set deleteStart to the index of the second one
-            int deleteStart = -1;
-            int findCount = 0;
-            for (int i = 0; i < code.Count - 2; i++) // -2 since we will be checking i + 2
-            {
-                if (code[i].opcode == OpCodes.Stfld && code[i].operand.Equals(typeof(Player).GetRuntimeField("manaRegen"))
-                    && code[i + 1].opcode == OpCodes.Ldarg_0
-                    && code[i + 2].opcode == OpCodes.Ldflda && code[i + 2].operand.Equals(typeof(Entity).GetRuntimeField("velocity"))
-                    ) {
-                    deleteStart = i + 1;
-                    findCount++;
-                }
-            }
+				// We use the backup cursor which was at the original position just before the 19 instructions
+				backup.GotoNext(); 
+				// remove the 19 instructions
+				for(int i=0; i < ilToRemove.Length; i++)
+				{
+					backup.Remove();
+				}
+				break;
 
-            // we were not able to find the instructions or we matched multiple instructions
-            // either way, something went wrong and we won't modify any code today
-            if (findCount != 1) return code;
+			}
 
+			if (!found)
+			{
+				throw new Exception("Instructions not found; unable to patch. Sorry!");
+			}
+		}
 
-            // remove the next 19 instructions
-            for (int i = 0; i < 19; i++) {
-                code.RemoveAt(deleteStart);
-            }
-                
-
-            return code;
-        }
-    }
+		// should return false if instruction doesn't match another instruction
+		public delegate bool Matches(Instruction instruction);
+	}
 }
