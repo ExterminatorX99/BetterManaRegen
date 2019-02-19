@@ -1,0 +1,9 @@
+v0.3
+  Rewrote the mod for TerrariaHooks instead of 0Harmony. I am told this is more likely to be compatible in the future.
+  Minor changes to description, build files
+
+v0.2
+  Mod properly undoes code changes when unloaded
+
+v0.1
+  Released :)
