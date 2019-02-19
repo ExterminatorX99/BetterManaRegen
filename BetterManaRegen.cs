@@ -4,6 +4,7 @@ using MonoMod.RuntimeDetour.HookGen;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using System;
+using System.Collections.Generic;
 
 namespace BetterManaRegen
 {
@@ -43,7 +44,7 @@ namespace BetterManaRegen
 		private void Player_UpdateManaRegen(MonoMod.RuntimeDetour.HookGen.HookIL il)
 		{
 			HookILCursor cursor = il.At(0);
-			Matches[] ilToRemove = {
+			Func<Instruction, bool>[] ilToRemove = {
 					instruction => instruction.MatchLdarg(0),
 					instruction => instruction.MatchLdflda<Entity>("velocity"),
 					instruction => instruction.MatchLdfld<Vector2>("X"),
@@ -69,6 +70,8 @@ namespace BetterManaRegen
 			};
 			bool found = false; //whether or not we have matched our 1 + 19 instructions
 
+			int attemptCount = 0; //used for logging
+			string loggedInstructions = "";
 			while (cursor.TryGotoNext(
 					// Look for when we store "manaRegen". This occurs just before our ilToRemove instructions
 					instruction => instruction.MatchStfld<Player>("manaRegen")))
@@ -79,6 +82,9 @@ namespace BetterManaRegen
 				{
 					// Move cursor to next instruction and see if it doesn't match
 					cursor.GotoNext();
+					loggedInstructions += attemptCount + ": " + cursor.Next?.OpCode.ToString() + "\n";
+
+					
 					if (!ilToRemove[i](cursor.Next))
 					{
 						found = false;
@@ -100,11 +106,10 @@ namespace BetterManaRegen
 
 			if (!found)
 			{
-				throw new Exception("Instructions not found; unable to patch. Sorry!");
+				throw new Exception("Instructions not found; unable to patch. Sorry!\n" + loggedInstructions);
 			}
 		}
 
-		// should return false if instruction doesn't match another instruction
-		public delegate bool Matches(Instruction instruction);
+		
 	}
 }
