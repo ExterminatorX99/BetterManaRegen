@@ -4,12 +4,31 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>..\references\0Harmony.dll</HintPath>
+    <Reference Include="Microsoft.Xna.Framework">
+      <HintPath>..\references\Microsoft.Xna.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework.Game">
+      <HintPath>..\references\Microsoft.Xna.Framework.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework.Graphics">
+      <HintPath>..\references\Microsoft.Xna.Framework.Graphics.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework.Xact">
+      <HintPath>..\references\Microsoft.Xna.Framework.Xact.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\references\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="Terraria">
       <HintPath>..\references\Terraria.exe</HintPath>
+    </Reference>
+    <Reference Include="TerrariaHooks">
+      <HintPath>..\references\TerrariaHooks.dll</HintPath>
     </Reference>
   </ItemGroup>
 
