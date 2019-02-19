@@ -4,3 +4,4 @@ displayName = Better Mana Regeneration
 buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, *.ase
 dllReferences = 0Harmony
 homepage = https://github.com/RypoFalem/BetterManaRegen
+includeSource = true
