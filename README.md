@@ -10,6 +10,3 @@ I don't like relying on potions while I am not fighting bosses so I changed that
  
 This mod has no effect when you are standing still or if you have the Mana Regeneration Potion buff. Mana Regeneration Potions behave as normal and quaffing them still provides a very noticeable buff.
 
-# Forum Thread
-
-https://forums.terraria.org/index.php?threads/better-mana-regen.77425/
