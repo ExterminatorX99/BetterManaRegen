@@ -39,8 +39,8 @@ namespace BetterManaRegen
 		// IL_0148: ldarg.0
 		// IL_0149: ldfld     bool Terraria.Player::manaRegenBuff
 		// IL_014E: brfalse.s IL_0165
-		private void Player_UpdateManaRegen(ILContext il) {
-			ILCursor cursor = new ILCursor(il);
+		private void Player_UpdateManaRegen(ILContext ilContext) {
+			ILCursor cursor = new ILCursor(ilContext);
 			Func<Instruction, bool>[] ilToRemove = {
 				instruction => instruction.MatchLdarg(0),
 				instruction => instruction.MatchLdflda<Entity>("velocity"),
@@ -74,12 +74,12 @@ namespace BetterManaRegen
 				instruction => instruction.MatchStfld<Terraria.Player>("manaRegen"))) {
 				ILCursor backup = cursor.Clone();
 				found = true;
-				for (int i = 0; i < ilToRemove.Length; i++) {
+				foreach (Func<Instruction, bool> il in ilToRemove) {
 					// Move cursor to next instruction and see if it doesn't match
 					cursor.GotoNext();
 					loggedInstructions += attemptCount + ": " + cursor.Next?.OpCode + "\n";
 
-					if (!ilToRemove[i](cursor.Next)) {
+					if (!il(cursor.Next)) {
 						found = false;
 						break;
 					}
