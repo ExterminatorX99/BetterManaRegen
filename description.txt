@@ -5,3 +5,7 @@ I don't like relying on potions while I am not fighting bosses so I changed that
 [c/3399FF:This mod removes that moving check] so that even while you are moving you will regenerate mana just as fast! However, it does not currently reduce the regeneration delay (the delay before mana regen starts).
  
 This mod has no effect when you are standing still or if you have the[i/s1:293]Mana Regeneration Potion buff. Mana Regeneration Potions behave as normal and quaffing them still provides a very noticeable buff.
+
+v0.4
+Removed TerrariaHooks dependency
+    - Now using tModLoader's built in IL editing
