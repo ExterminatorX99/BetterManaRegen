@@ -1,4 +1,4 @@
-v0.4
+v0.5
   Remove TerrariaHooks dependecy
 	- Now using tModLoader's build in IL editing
 v0.3

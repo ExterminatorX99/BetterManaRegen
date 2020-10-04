@@ -1,5 +1,5 @@
 author = rypofalem
-version = 0.4
+version = 0.5
 displayName = Better Mana Regeneration
 homepage = https://github.com/RypoFalem/BetterManaRegen
 includeSource = true
