@@ -1,16 +1,15 @@
-using Terraria.ModLoader;
-using Terraria;
-using MonoMod.RuntimeDetour.HookGen;
-using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using System;
-using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+using Terraria;
+using Terraria.ModLoader;
+using Mono.Cecil.Cil;
 
 namespace BetterManaRegen
 {
 
-    class BetterManaRegen : Mod
-    {
+	class BetterManaRegen : Mod
+	{
 		public override void Load()
 		{
 			IL.Terraria.Player.UpdateManaRegen += Player_UpdateManaRegen;
@@ -41,9 +40,9 @@ namespace BetterManaRegen
 		// IL_0148: ldarg.0
 		// IL_0149: ldfld     bool Terraria.Player::manaRegenBuff
 		// IL_014E: brfalse.s IL_0165
-		private void Player_UpdateManaRegen(MonoMod.RuntimeDetour.HookGen.HookIL il)
+		private void Player_UpdateManaRegen(ILContext il)
 		{
-			HookILCursor cursor = il.At(0);
+			ILCursor cursor = new ILCursor(il);
 			Func<Instruction, bool>[] ilToRemove = {
 					instruction => instruction.MatchLdarg(0),
 					instruction => instruction.MatchLdflda<Entity>("velocity"),
@@ -76,7 +75,7 @@ namespace BetterManaRegen
 					// Look for when we store "manaRegen". This occurs just before our ilToRemove instructions
 					instruction => instruction.MatchStfld<Player>("manaRegen")))
 			{
-				HookILCursor backup = cursor.Clone();
+				ILCursor backup = cursor.Clone();
 				found = true;
 				for (int i = 0; i < ilToRemove.Length; i++)
 				{
