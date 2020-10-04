@@ -1,18 +1,17 @@
-using MonoMod.Cil;
 using System;
+using IL.Terraria;
 using Microsoft.Xna.Framework;
-using Terraria;
-using Terraria.ModLoader;
 using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using Terraria.ModLoader;
+using Entity = Terraria.Entity;
 
 namespace BetterManaRegen
 {
-
-	class BetterManaRegen : Mod
+	internal class BetterManaRegen : Mod
 	{
-		public override void Load()
-		{
-			IL.Terraria.Player.UpdateManaRegen += Player_UpdateManaRegen;
+		public override void Load() {
+			Player.UpdateManaRegen += Player_UpdateManaRegen;
 		}
 
 		// We're looking for these instructions and we want to delete all but the first one
@@ -40,75 +39,64 @@ namespace BetterManaRegen
 		// IL_0148: ldarg.0
 		// IL_0149: ldfld     bool Terraria.Player::manaRegenBuff
 		// IL_014E: brfalse.s IL_0165
-		private void Player_UpdateManaRegen(ILContext il)
-		{
+		private void Player_UpdateManaRegen(ILContext il) {
 			ILCursor cursor = new ILCursor(il);
 			Func<Instruction, bool>[] ilToRemove = {
-					instruction => instruction.MatchLdarg(0),
-					instruction => instruction.MatchLdflda<Entity>("velocity"),
-					instruction => instruction.MatchLdfld<Vector2>("X"),
-					instruction => instruction.MatchLdcR4(0.0f),
-					instruction => instruction.Match(OpCodes.Bne_Un_S),
+				instruction => instruction.MatchLdarg(0),
+				instruction => instruction.MatchLdflda<Entity>("velocity"),
+				instruction => instruction.MatchLdfld<Vector2>("X"),
+				instruction => instruction.MatchLdcR4(0.0f),
+				instruction => instruction.Match(OpCodes.Bne_Un_S),
 
-					instruction => instruction.MatchLdarg(0),
-					instruction => instruction.MatchLdflda<Entity>("velocity"),
-					instruction => instruction.MatchLdfld<Vector2>("Y"),
-					instruction => instruction.MatchLdcR4(0.0f),
-					instruction => instruction.Match(OpCodes.Beq_S),
+				instruction => instruction.MatchLdarg(0),
+				instruction => instruction.MatchLdflda<Entity>("velocity"),
+				instruction => instruction.MatchLdfld<Vector2>("Y"),
+				instruction => instruction.MatchLdcR4(0.0f),
+				instruction => instruction.Match(OpCodes.Beq_S),
 
-					instruction => instruction.MatchLdarg(0),
-					instruction => instruction.MatchLdfld<Player>("grappling"),
-					instruction => instruction.MatchLdcI4(0),
-					instruction => instruction.MatchLdelemI4(),
-					instruction => instruction.MatchLdcI4(0),
-					instruction => instruction.Match(OpCodes.Bge_S),
+				instruction => instruction.MatchLdarg(0),
+				instruction => instruction.MatchLdfld<Terraria.Player>("grappling"),
+				instruction => instruction.MatchLdcI4(0),
+				instruction => instruction.MatchLdelemI4(),
+				instruction => instruction.MatchLdcI4(0),
+				instruction => instruction.Match(OpCodes.Bge_S),
 
-					instruction => instruction.MatchLdarg(0),
-					instruction => instruction.MatchLdfld<Player>("manaRegenBuff"),
-					instruction => instruction.Match(OpCodes.Brfalse_S)
+				instruction => instruction.MatchLdarg(0),
+				instruction => instruction.MatchLdfld<Terraria.Player>("manaRegenBuff"),
+				instruction => instruction.Match(OpCodes.Brfalse_S)
 			};
 			bool found = false; //whether or not we have matched our 1 + 19 instructions
 
 			int attemptCount = 0; //used for logging
 			string loggedInstructions = "";
 			while (cursor.TryGotoNext(
-					// Look for when we store "manaRegen". This occurs just before our ilToRemove instructions
-					instruction => instruction.MatchStfld<Player>("manaRegen")))
-			{
+				// Look for when we store "manaRegen". This occurs just before our ilToRemove instructions
+				instruction => instruction.MatchStfld<Terraria.Player>("manaRegen"))) {
 				ILCursor backup = cursor.Clone();
 				found = true;
-				for (int i = 0; i < ilToRemove.Length; i++)
-				{
+				for (int i = 0; i < ilToRemove.Length; i++) {
 					// Move cursor to next instruction and see if it doesn't match
 					cursor.GotoNext();
-					loggedInstructions += attemptCount + ": " + cursor.Next?.OpCode.ToString() + "\n";
+					loggedInstructions += attemptCount + ": " + cursor.Next?.OpCode + "\n";
 
-					
-					if (!ilToRemove[i](cursor.Next))
-					{
+					if (!ilToRemove[i](cursor.Next)) {
 						found = false;
 						break;
 					}
 				}
-				if (!found) continue;
+				if (!found)
+					continue;
 
 				// We use the backup cursor which was at the original position just before the 19 instructions
-				backup.GotoNext(); 
+				backup.GotoNext();
 				// remove the 19 instructions
-				for(int i=0; i < ilToRemove.Length; i++)
-				{
+				for (int i = 0; i < ilToRemove.Length; i++)
 					backup.Remove();
-				}
 				break;
-
 			}
 
 			if (!found)
-			{
 				throw new Exception("Instructions not found; unable to patch. Sorry!\n" + loggedInstructions);
-			}
 		}
-
-		
 	}
 }
