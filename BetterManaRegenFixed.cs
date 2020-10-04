@@ -6,9 +6,9 @@ using MonoMod.Cil;
 using Terraria.ModLoader;
 using Entity = Terraria.Entity;
 
-namespace BetterManaRegen
+namespace BetterManaRegenFixed
 {
-	internal class BetterManaRegen : Mod
+	internal class BetterManaRegenFixed : Mod
 	{
 		public override void Load() {
 			Player.UpdateManaRegen += Player_UpdateManaRegen;
