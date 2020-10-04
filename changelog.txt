@@ -1,3 +1,5 @@
+v0.4
+  #TODO
 v0.3
   Rewrote the mod for TerrariaHooks instead of 0Harmony. I am told this is more likely to be compatible in the future.
   Minor changes to description, build files
